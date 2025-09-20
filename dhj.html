@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Unsubscribe</title>
+  <style>
+    :root { --bg:#0b1020; --card:#121932; --text:#f7f8fd; --muted:#9aa4c7; --acc:#5b8cff; --ok:#40c057; --warn:#ff922b; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; background: radial-gradient(1200px 800px at 20% -10%, #1b2a6b33, transparent), var(--bg); color: var(--text); }
+    .wrap { min-height: 100dvh; display:grid; place-items:center; padding:24px; }
+    .card { width:100%; max-width:560px; background: linear-gradient(180deg, #1b264d80, #0e132b80), var(--card); border:1px solid #263165; border-radius: 20px; padding:28px; box-shadow: 0 20px 60px #0007; }
+    h1 { font-size: clamp(24px, 3.4vw, 34px); margin: 0 0 8px 0; letter-spacing: 0.2px; }
+    p  { margin: 8px 0 0 0; color: var(--muted); line-height: 1.55; }
+    .muted { color: var(--muted); }
+    .row { display:flex; gap:12px; align-items:center; }
+    .field { display:flex; flex-direction:column; gap:8px; margin-top:18px; }
+    input, textarea { width:100%; padding:12px 14px; border-radius:12px; border:1px solid #2b3a7a; background:#0b1333; color:var(--text); outline:none; }
+    textarea { min-height: 86px; resize: vertical; }
+    .btn { cursor:pointer; margin-top:16px; width:100%; border:0; padding:14px 16px; border-radius: 14px; background: linear-gradient(180deg, #6ea8ff, #4c7fff); color:#0b1020; font-weight: 700; font-size: 16px; letter-spacing: .2px; }
+    .btn[disabled] { opacity:.6; cursor:not-allowed; }
+    .small { font-size:12px; }
+    .toast { margin-top:14px; padding:12px 14px; border-radius:12px; background:#0f1a3a; border:1px solid #2b3a7a; display:none; }
+    .toast.ok { border-color:#2b7a4a; }
+    .toast.warn { border-color:#7a5a2b; }
+    .spinner { display:inline-block; width:16px; height:16px; border:2px solid #ffffff55; border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; vertical-align:-3px; margin-right:8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .footer { margin-top:18px; text-align:center; }
+    a { color:#93b4ff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main class="card" role="main" aria-labelledby="title">
+      <h1 id="title">Manage email preferences</h1>
+      <p class="muted" id="intro">Confirm you’d like to unsubscribe from future emails from <span id="brand">our mailing list</span>.</p>
+
+      <div class="field">
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+      </div>
+
+      <div class="row" style="gap:8px; margin-top:10px;">
+        <input type="checkbox" id="optout-all" checked />
+        <label for="optout-all" class="muted">Unsubscribe from all emails</label>
+      </div>
+
+      <div class="field">
+        <label for="reason" class="muted">Optional feedback</label>
+        <textarea id="reason" name="reason" placeholder="Too many emails, not relevant, etc."></textarea>
+      </div>
+
+      <button class="btn" id="submitBtn">Confirm unsubscribe</button>
+
+      <div class="toast" id="toast"></div>
+
+      <p class="footer small muted">If this wasn’t you, simply ignore this page. You can re‑subscribe anytime.</p>
+    </main>
+  </div>
+
+  <script>
+    // Helper: read query params like ?email=&token=&brand=
+    const params = new URLSearchParams(location.search);
+    const emailInput = document.getElementById('email');
+    const brandSpan  = document.getElementById('brand');
+    const introP     = document.getElementById('intro');
+
+    const qpEmail = params.get('email');
+    const qpBrand = params.get('brand');
+
+    if (qpEmail) emailInput.value = decodeURIComponent(qpEmail);
+    if (qpBrand) brandSpan.textContent = decodeURIComponent(qpBrand);
+
+    function showToast(msg, kind = '') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast ' + (kind || '');
+      el.style.display = 'block';
+    }
+
+    async function submitUnsubscribe() {
+      const btn = document.getElementById('submitBtn');
+      const email = emailInput.value.trim();
+      const reason = document.getElementById('reason').value.trim();
+      const all = document.getElementById('optout-all').checked;
+      const token = params.get('token');
+
+      if (!email) { showToast('Please enter a valid email.', 'warn'); return; }
+
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Processing…';
+
+      try {
+        // Replace this URL with your actual API endpoint
+        const res = await fetch('/api/unsubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, token, all, reason, source: 'unsubscribe-page' })
+        });
+
+        if (!res.ok) throw new Error('Request failed');
+        const data = await res.json().catch(() => ({}));
+        showToast(data.message || 'You have been unsubscribed. Sorry to see you go! ✅', 'ok');
+        btn.textContent = 'Unsubscribed';
+      } catch (e) {
+        console.error(e);
+        showToast('Could not complete request. Please try again later or contact support.', 'warn');
+        btn.disabled = false; btn.textContent = 'Confirm unsubscribe';
+      }
+    }
+
+    document.getElementById('submitBtn').addEventListener('click', submitUnsubscribe);
+  </script>
+</body>
+</html>

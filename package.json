@@ -1,0 +1,24 @@
+{
+  "name": "nodemailer-awon-starter",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node mailer.js",
+    "send": "node mailer.js",
+    "preview-template": "node -e \"import fs from 'fs'; console.log(fs.readFileSync('./template.html','utf8'))\""
+  },
+  "dependencies": {
+    "csv-parser": "^3.2.0",
+    "csv-writer": "^1.6.0",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "fs-extra": "^11.3.1",
+    "handlebars": "^4.7.8",
+    "html-to-text": "^9.0.5",
+    "nodemailer": "^6.10.1",
+    "p-queue": "^7.4.1",
+    "papaparse": "^5.4.1",
+    "randomstring": "^1.3.1",
+    "spintax": "^1.1.2"
+  }
+}
